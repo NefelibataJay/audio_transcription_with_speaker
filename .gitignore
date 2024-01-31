@@ -1,0 +1,4 @@
+__pycache__
+asr/onnx/
+audio/
+paraformer_logs/
