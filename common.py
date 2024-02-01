@@ -28,7 +28,7 @@ def load_model():
     vad_model.vad.vad_opts.max_start_silence_time = 1000
 
     # asr
-    asr_offline_model = ParaformerOffline("asr/onnx/asr_offline")
+    asr_offline_model = ParaformerOffline("asr/onnx/asr_offline", divese_id=1)
 
     # punctuation
     punctuate_model = CttPunctuator("asr/onnx/punc", online=True)
