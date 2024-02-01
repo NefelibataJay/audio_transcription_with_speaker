@@ -46,12 +46,12 @@ class ParaformerOnline:
 
 
 class ParaformerOffline:
-    def __init__(self, model_dir=None, *, use_lm=False, intra_op_num_threads=4, divese_id=-1):
+    def __init__(self, model_dir=None, *, use_lm=False, intra_op_num_threads=4, device_id=-1):
         project_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         model_dir = model_dir or os.path.join(project_dir, "onnx", "asr_offline")
         logger.info(f"Load onnx model dir at {model_dir}")
         self.model = ParaformerOfflineModel(
-            model_dir, intra_op_num_threads=intra_op_num_threads, use_lm=use_lm, divese_id=divese_id
+            model_dir, intra_op_num_threads=intra_op_num_threads, use_lm=use_lm, device_id=device_id
         )
         self.param_dict = {"cache": dict()}
 

@@ -365,7 +365,7 @@ class ParaformerOnlineModel:
 @singleton
 class ParaformerOfflineModel:
     def __init__(
-        self, model_dir: str = None, use_lm=False, intra_op_num_threads=4,divese_id=-1
+        self, model_dir: str = None, use_lm=False, intra_op_num_threads=4,device_id=-1
     ) -> None:
         config_path = os.path.join(model_dir, "config.pkl")
         with open(config_path, "rb") as file:
@@ -392,7 +392,7 @@ class ParaformerOfflineModel:
             model_file,
             contextual_model=contextual_model,
             intra_op_num_threads=intra_op_num_threads,
-            divese_id=divese_id
+            device_id=device_id
         )
 
     def extract_feat(self, waveforms: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
