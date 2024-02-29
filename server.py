@@ -18,12 +18,7 @@ app = Flask(__name__)
 task_queue = Queue()
 # 存储所有任务的状态
 tasks_dict = {
-    "task_id": {"file_path": "", "status": "running", "result_list": []}
-}
-
-speaker_task_queue = Queue()
-speaker_tasks_dict = {
-    "task_id": {"file_path": "", "time_list": [], "status": "running", "result_list": []}
+    # "task_id": {"file_path": "", "status": "running", "result_list": [], type: "speaker"}
 }
 
 # load model
@@ -40,22 +35,6 @@ def load_keywords():
                 global_keywords.append(line)
 
     print(f'keywords num: {len(global_keywords)}')
-
-
-def execute_speaker_task():
-    while True:
-        if speaker_task_queue.empty():
-            time.sleep(10)
-            continue
-
-        task_id = speaker_task_queue.queue[0]
-        print(f"开始执行任务--{task_id}")
-
-        tasks_dict[task_id]['status'] = 'running'
-        wav_file = tasks_dict[task_id]["file_path"]
-
-        speaker_decoder = SpeakerDecoder(speaker_identifier)
-        # speaker_decoder.run(wav_file)
 
 
 def execute_task():
@@ -79,9 +58,15 @@ def execute_task():
        # print(f'keywords updates: {len(keywords)}')
 
         # start decoder thread
-        audio_decoder = Decoder(second_pass_decoder,
-                                punctuator, vad, speaker_identifier)
-        audio_decoder.set_keywords(global_keywords)
+        if tasks_dict[task_id]["type"] == "speaker":
+            audio_decoder = SpeakerDecoder(speaker_identifier, vad)
+        else:
+            # type = "audio"
+            audio_decoder = Decoder(second_pass_decoder,
+                                    punctuator, vad, speaker_identifier)
+
+            audio_decoder.set_keywords(global_keywords)
+
         tasks_dict[task_id]['result_list'] = audio_decoder.run(wav_file)
         tasks_dict[task_id]['status'] = 'Completed'
         file_path = tasks_dict[task_id]["file_path"]
@@ -96,7 +81,7 @@ def execute_task():
 @app.route('/get_result/<task_id>', methods=['GET'])
 def get_result(task_id):
     print(f"获取任务--{task_id}--的结果")
-    if task_id not in tasks_dict and task_id not in speaker_tasks_dict:
+    if task_id not in tasks_dict:
         return_data = {
             'code': 400,
             'message': "还未创建任务, 或任务数据已被获取导致任务过期",
@@ -151,8 +136,8 @@ def decode_audio_api():
         }
         return jsonify(return_data)
 
-    tasks_dict[task_id] = {"file_path": save_path,
-                           "status": "running", "result_list": [], "keywords": []}
+    tasks_dict[task_id] = {"file_path": save_path, "status": "running",
+                           "result_list": [], "keywords": [], "type": "audio"}
 
     # keywords = ["热词1", "热词2"]
     if request.form.get("keywords") is not None:
@@ -213,16 +198,11 @@ def speaker_recognition():
         }
         return jsonify(return_data)
 
-    if request.form.get("time_list") is not None:
-        time_list = request.form.get("time_list")
-    else:
-        time_list = []
-
-    speaker_tasks_dict[task_id] = {"file_path": save_path, time_list: [],
-                                   "status": "running", "result_list": [], "keywords": []}
+    tasks_dict[task_id] = {"file_path": save_path, "status": "running",
+                           "result_list": [], "keywords": [], "type": "speaker"}
 
     try:
-        speaker_task_queue.put(task_id)
+        task_queue.put(task_id)
 
     except Exception as e:
         print(e)

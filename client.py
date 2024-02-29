@@ -4,12 +4,14 @@ import requests
 import time
 
 # url = "http://speech.xiaoyuzhineng.com:19876/external/decode_audio"
-url = "http://localhost:18765/decode_audio"
+# url = "http://localhost:18765/decode_audio"
+url = "http://localhost:18765/speaker_recognition"
 
 with open("E:/Desktop/resources/1_test.wav", 'rb') as file:
     files = {'wav_file': ('1.wav', file)}
 
-    response = requests.post(url, files=files, data={"keywords":["中间协会","其他关键字"]})
+    response = requests.post(url, files=files, data={
+                             "keywords": ["中间协会", "其他关键字"]})
     response = json.loads(response.text)
     data_id = response.get("data")
     print(response)
