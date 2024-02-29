@@ -12,6 +12,7 @@ from asr.runtime.python.utils.audioHelper import AudioReader
 from asr.runtime.python.utils.singleton import singleton
 from asr.runtime.python.model.sv.cluster import CommonClustering, make_rttms
 
+
 @singleton
 class Campplus:
     def __init__(self, onnx_path=None, threshold=0.5):
@@ -38,7 +39,7 @@ class Campplus:
         # sess_opt.log_severity_level = 4
         # sess_opt.enable_cpu_mem_arena = False
         # sess_opt.graph_optimization_level = GraphOptimizationLevel.ORT_ENABLE_ALL
-        
+
         # cuda_ep = "CUDAExecutionProvider"
         # cuda_provider_options = {
         #     "device_id": device_id,
@@ -61,7 +62,6 @@ class Campplus:
         #     EP_list = [(cuda_ep, cuda_provider_options)]
         # EP_list.append((cpu_ep, cpu_provider_options))
 
-    
         # self.sess = InferenceSession(
         #     self.onnx, sess_options=sess_opt, providers=EP_list
         # )
@@ -150,10 +150,10 @@ class Campplus:
         if self.memory is None:
             self.memory = emb / np.linalg.norm(emb)
             return 1
-        
+
         sim = self.compute_cos_similarity(emb)[0]
         print(threshold, sim)
-        
+
         max_sim_index = np.argmax(sim)
 
         if sim[max_sim_index] <= threshold:
@@ -168,9 +168,9 @@ class Campplus:
             # 置信度较高，对memory中的embeding进行动量更新
             if sim[max_sim_index] >= 0.9:
                 memory_emb = self.memory[max_sim_index]
-                new_memory_emb =  memory_emb * 0.8 + emb * 0.2           
+                new_memory_emb = memory_emb * 0.8 + emb * 0.2
                 self.memory[max_sim_index] = new_memory_emb
-        
+
             return max_sim_index + 1
 
     def store_segments_emb(self, waveform: Union[str, Path, bytes], start, end):
@@ -181,17 +181,17 @@ class Campplus:
             self.segments_embs = emb
         else:
             self.segments_embs = np.concatenate(
-                                (
-                                    self.segments_embs,
-                                    emb,
-                                )
+                (
+                    self.segments_embs,
+                    emb,
+                )
             )
         self.segments_list.append((start, end))
 
     def cluster(self):
         # cluster
         labels = self.cluster_fn(self.segments_embs)
-        
+
         # output rttm
         # 保持标签顺序，并获取唯一值
         unique_labels, indices = np.unique(labels, return_index=True)
@@ -199,14 +199,14 @@ class Campplus:
         # 按原始顺序排列唯一值
         unique_labels_sorted_by_indices = unique_labels[np.argsort(indices)]
 
-        new_labels = np.zeros(len(labels),dtype=int)
+        new_labels = np.zeros(len(labels), dtype=int)
 
         for i in range(len(unique_labels_sorted_by_indices)):
-            new_labels[labels==unique_labels_sorted_by_indices[i]] = i
+            new_labels[labels == unique_labels_sorted_by_indices[i]] = i
 
-        # print(labels, new_labels, uniq) 
-        #print(f'new label== {labels}, {new_labels}')
-        seg_list = [(i,j) for i,j in zip(self.segments_list, new_labels)]
-        #rec_id = embs_file.name.rsplit('.', 1)[0]
-        #out_rttm = os.path.join(args.rttm_dir, rec_id+'.rttm')
+        # print(labels, new_labels, uniq)
+        # print(f'new label== {labels}, {new_labels}')
+        seg_list = [(i, j) for i, j in zip(self.segments_list, new_labels)]
+        # rec_id = embs_file.name.rsplit('.', 1)[0]
+        # out_rttm = os.path.join(args.rttm_dir, rec_id+'.rttm')
         return make_rttms(seg_list)

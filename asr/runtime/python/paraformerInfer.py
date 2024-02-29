@@ -61,7 +61,7 @@ class ParaformerOffline:
         hot_words: str = "",
         beam_search=True,
         beam_size=5,
-        lm_weight=0.1,
+        lm_weight=0.3,
     ):
         """
         Args:
